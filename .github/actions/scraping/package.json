@@ -1,22 +1,22 @@
 {
-  "name": "chatops-build-notification",
+  "name": "scraping",
   "version": "1.0.0",
-  "description": "This action will attempt to send chatops notifications.",
+  "description": "This action will attempt to scrape pdf files.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 0"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/FergOSS/ask-archie.git"
+    "url": "git+https://github.com/homeaidepi/scrappy.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/FergOSS/ask-archie/issues"
+    "url": "https://github.com/homeaidepi/scrappy/issues"
   },
-  "homepage": "https://github.com/FergOSS/ask-archie#readme",
+  "homepage": "https://github.com/homeaidepi/scrappy#readme",
   "dependencies": {
     "@actions/core": "^1.6.0",
     "@actions/github": "^5.0.1",   

@@ -40,11 +40,11 @@ jobs:
         shell: pwsh
         continue-on-error: true
         run: |
-          pushd './.github/actions/scraping
+          pushd './.github/actions/scraping'
           npm install
           popd
 
-      - name: 'Run ChatOps Build Notification'
+      - name: 'Run Scrappy Scraping'
         uses: ./.github/actions/scraping
         with:
           pdfFileName: ${{ inputs.PDF_FILE_NAME }}
