@@ -81,7 +81,7 @@ async function scrapePDF(pdfFilePath) {
   const page = await browser.newPage();
   const fileUrl = `file://${path.resolve(pdfFilePath)}`;
 
-  await page.goto(fileUrl, { waitUntil: 'networkidle0' });
+  await page.goto(fileUrl, {waitUntil: 'load', timeout: 0} );
 
   const data = await page.evaluate(() => {
     // Modify this section according to the structure of the PDF you're scraping
