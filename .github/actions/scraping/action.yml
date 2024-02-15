@@ -15,5 +15,5 @@ outputs:
   result:
     description: 'The result of the notification'
 runs:
-  using: 'node16'
+  using: 'node17'
   main: 'index.js'
