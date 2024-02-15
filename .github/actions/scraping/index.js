@@ -48,7 +48,7 @@ async function processPdf() {
     // or fetch it from some azure file blob or something
     //let result = await axios.default.get(url);
     
-    console.log(`result.status: ${result.status}`);
+    //console.log(`result: ${result}`);
     core.setOutput("time", new Date().toTimeString());
     core.setOutput("result", result.status);
     
