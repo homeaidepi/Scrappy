@@ -20,9 +20,9 @@ jobs:
     environment: 'preprod'
     steps:
       - name: 'Checkout GitHub Action'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
-          repository: FergOSS/AskArchie
+          repository: homeaidepi/scrappy
           ref: main
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
