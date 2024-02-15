@@ -2,7 +2,8 @@ const core = require('@actions/core');
 const axios = require('axios');
 const { Octokit } = require("@octokit/rest");
 const fetch = require("cross-fetch");
-const puppeteer = require('puppeteer');
+const {PDFJS }= require('pdfjs-dist');
+
 const path = require('path');
 
 let browser = null;
@@ -52,12 +53,17 @@ async function processPdf() {
     // read the file and process with puppeteer
     // or use some other library to extract the data
 
-    // initialize puppeteer
-    await initPuppeteer();
-    let pdfFileData = await scrapePDF(pdfFileName);
-    console.log(`pdfFileData: ${JSON.stringify(pdfFileData)}`);
-    // close puppeteer
-    await closePuppeteer();
+    
+    const pdfText = await extractPDFContent(pdfFileName);
+    console.log(pdfText);
+
+
+    // // initialize puppeteer
+    // await initPuppeteer();
+    // let pdfFileData = await scrapePDF(pdfFileName);
+    // console.log(`pdfFileData: ${JSON.stringify(pdfFileData)}`);
+    // // close puppeteer
+    // await closePuppeteer();
 
     // using the octokit to get the pdf file 
     // or fetch it from some azure file blob or something
@@ -65,12 +71,20 @@ async function processPdf() {
     
     //console.log(`result: ${result}`);
     core.setOutput("time", new Date().toTimeString());
-    core.setOutput("result", JSON.stringify(result));
+    core.setOutput("result", JSON.stringify(pdfText));
     
   } catch (error) {
     core.setFailed(error.message);
     console.log(error);
   }
+}
+
+async function extractPDFContent(pdfPath) {
+  const pdfDoc = await PDFJS.getDocument(pdfPath);
+  const pageNumber = 1;
+  const page = await pdfDoc.getPage(pageNumber);
+  const textContent = await page.getTextContent();
+  return textContent;
 }
 
 async function initPuppeteer() {
