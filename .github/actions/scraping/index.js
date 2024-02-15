@@ -50,7 +50,7 @@ async function processPdf() {
     
     //console.log(`result: ${result}`);
     core.setOutput("time", new Date().toTimeString());
-    core.setOutput("result", result.status);
+    core.setOutput("result", JSON.stringify(result));
     
   } catch (error) {
     core.setFailed(error.message);
