@@ -53,7 +53,8 @@ async function processPdf() {
     // read the file and process with puppeteer
     // or use some other library to extract the data
 
-    
+    // make pdfFileName like "file://${pdfFileName}"
+    pdfFileName = `file://${pdfFileName}`;
     const pdfText = await readPdfText({url: pdfFileName});
     console.info(pdfText);
 
