@@ -1,0 +1,51 @@
+name: Scrappy the Scraper Reusable Workflow
+
+on:
+  workflow_call:
+    inputs:
+      PDF_FILE_NAME:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      PDF_FILE_NAME:
+        description: 'The name of the PDF file'
+        type: string
+        required: true
+        default: ''
+
+jobs:
+  scraping:
+    runs-on: [ubuntu-latest]
+    environment: 'preprod'
+    steps:
+      - name: 'Checkout GitHub Action'
+        uses: actions/checkout@v2
+        with:
+          repository: FergOSS/AskArchie
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+
+      - name: Setup Node Environment
+        uses: actions/setup-node@v1
+        continue-on-error: true
+        with:
+          node-version: '16.x'
+
+      # npm install
+      - name: 'Resolve Project Dependencies Using Npm'
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          pushd './.github/actions/scraping
+          npm install
+          popd
+
+      - name: 'Run ChatOps Build Notification'
+        uses: ./.github/actions/scraping
+        with:
+          pdfFileName: ${{ inputs.PDF_FILE_NAME }}
+          secrets: ${{ secrets.DOUBLE_BASE64_ENCODED_SECRETS }}

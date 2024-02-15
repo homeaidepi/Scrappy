@@ -1,0 +1,28 @@
+{
+  "name": "chatops-build-notification",
+  "version": "1.0.0",
+  "description": "This action will attempt to send chatops notifications.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FergOSS/ask-archie.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/FergOSS/ask-archie/issues"
+  },
+  "homepage": "https://github.com/FergOSS/ask-archie#readme",
+  "dependencies": {
+    "@actions/core": "^1.6.0",
+    "@actions/github": "^5.0.1",   
+    "@octokit/rest": "^20.0.2",
+    "axios": "^1.3.2",
+    "cross-fetch": "^4.0.0", 
+    "qs": "^6.11.0"
+  }
+}

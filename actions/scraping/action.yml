@@ -1,0 +1,19 @@
+name: 'Scrappy Scraping GitHub Action'
+description: 'Attepts to scrape a pdf blob, for JSON key value pairs, then send the results to a database, if the database was successful delete the blob'
+inputs:
+  pdfFileName:
+    description: 'PDF File Name'
+    required: true
+    default: 'not set'
+  secrets:
+    description: 'Secrets'
+    required: false
+    default: ''
+outputs:
+  time: 
+    description: 'The time we sent notification'
+  result:
+    description: 'The result of the notification'
+runs:
+  using: 'node16'
+  main: 'index.js'
