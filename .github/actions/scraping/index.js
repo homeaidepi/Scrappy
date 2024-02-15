@@ -77,30 +77,35 @@ async function initPuppeteer() {
   browser = await puppeteer.launch();
 }
 
+async function closePuppeteer() {
+  await browser.close();
+}
+
 async function scrapePDF(pdfFilePath) {
   const page = await browser.newPage();
   const fileUrl = `file://${path.resolve(pdfFilePath)}`;
 
   await page.goto(fileUrl, {waitUntil: 'load', timeout: 0} );
 
-  const data = await page.evaluate(() => {
-    // Modify this section according to the structure of the PDF you're scraping
-    // Example: Extracting text from all paragraphs
-    const paragraphs = Array.from(document.querySelectorAll('p'));
-    const extractedData = {};
-    paragraphs.forEach((p, index) => {
-      extractedData[`paragraph_${index + 1}`] = p.textContent.trim();
-    });
-    return extractedData;
+  let pdfText = await pdfToText(pdfFilePath);
+
+  // return json data of the page using puppeteer evaluate
+  return { text: pdfText };
+}
+
+async function pdfToText(pdfPath) {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto(`file://${pdfPath}`);
+  const pdfText = await page.evaluate(() => {
+    const textContent = document.querySelector('body').textContent;
+    return textContent;
   });
 
-  await page.close();
-  return data;
+  await browser.close();
+  return pdfText;
 }
 
-async function closePuppeteer() {
-  await browser.close();
-}
 
 async function run() {
   await Promise.all([
