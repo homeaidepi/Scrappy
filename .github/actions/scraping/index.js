@@ -54,7 +54,7 @@ async function processPdf() {
     // or use some other library to extract the data
 
     // make pdfFileName like "file://${pdfFileName}"
-    pdfFileName = `file://${path.resolve(pdfFilePath)}`
+    pdfFileName = `file://${path.resolve(pdfFileName)}`
     const pdfText = await readPdfText({url: pdfFileName});
     console.info(pdfText);
 
