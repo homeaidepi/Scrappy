@@ -2,9 +2,8 @@ const core = require('@actions/core');
 const axios = require('axios');
 const { Octokit } = require("@octokit/rest");
 const fetch = require("cross-fetch");
-
-import PDFJS from 'pdfjs-dist/build/pdf';
-
+//const puppeteer = require('puppeteer');
+const {readPdfText} = require('pdf-text-reader');
 const path = require('path');
 
 let browser = null;
@@ -55,9 +54,8 @@ async function processPdf() {
     // or use some other library to extract the data
 
     
-    const pdfText = await extractPDFContent(pdfFileName);
-    console.log(pdfText);
-
+    const pdfText = await readPdfText({url: pdfFileName});
+    console.info(pdfText);
 
     // // initialize puppeteer
     // await initPuppeteer();
