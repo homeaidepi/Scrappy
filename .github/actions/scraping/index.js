@@ -2,7 +2,8 @@ const core = require('@actions/core');
 const axios = require('axios');
 const { Octokit } = require("@octokit/rest");
 const fetch = require("cross-fetch");
-const PDFJS = require('pdfjs-dist');
+
+import PDFJS from 'pdfjs-dist/build/pdf';
 
 const path = require('path');
 
