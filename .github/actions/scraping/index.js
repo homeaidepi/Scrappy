@@ -78,7 +78,9 @@ async function initPuppeteer() {
 
 async function scrapePDF(pdfFilePath) {
   const page = await browser.newPage();
-  await page.goto(`file://${pdfFilePath}`, { waitUntil: 'networkidle0' });
+  const fileUrl = `file://${path.resolve(pdfFilePath)}`;
+
+  await page.goto(fileUrl, { waitUntil: 'networkidle0' });
 
   const data = await page.evaluate(() => {
     // Modify this section according to the structure of the PDF you're scraping
