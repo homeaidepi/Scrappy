@@ -55,7 +55,7 @@ async function processPdf() {
     // initialize puppeteer
     await initPuppeteer();
     let pdfFileData = await scrapePDF(pdfFileName);
-    console.log(`pdfFileData: ${pdfFileData}`);
+    console.log(`pdfFileData: ${JSON.stringify(pdfFileData)}`);
     // close puppeteer
     await closePuppeteer();
 
