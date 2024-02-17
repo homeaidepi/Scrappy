@@ -2,7 +2,8 @@ const core = require('@actions/core');
 const axios = require('axios');
 const { Octokit } = require("@octokit/rest");
 const fetch = require("cross-fetch");
-const puppeteer = require('puppeteer');
+//const puppeteer = require('puppeteer');
+const {readPdfText} = require('pdf-text-reader');
 const path = require('path');
 
 let browser = null;
@@ -52,12 +53,17 @@ async function processPdf() {
     // read the file and process with puppeteer
     // or use some other library to extract the data
 
-    // initialize puppeteer
-    await initPuppeteer();
-    let pdfFileData = await scrapePDF(pdfFileName);
-    console.log(`pdfFileData: ${pdfFileData}`);
-    // close puppeteer
-    await closePuppeteer();
+    // make pdfFileName like "file://${pdfFileName}"
+    pdfFileName = `file://${path.resolve(pdfFileName)}`
+    const pdfText = await readPdfText({url: pdfFileName});
+    console.info(pdfText);
+
+    // // initialize puppeteer
+    // await initPuppeteer();
+    // let pdfFileData = await scrapePDF(pdfFileName);
+    // console.log(`pdfFileData: ${JSON.stringify(pdfFileData)}`);
+    // // close puppeteer
+    // await closePuppeteer();
 
     // using the octokit to get the pdf file 
     // or fetch it from some azure file blob or something
@@ -65,7 +71,7 @@ async function processPdf() {
     
     //console.log(`result: ${result}`);
     core.setOutput("time", new Date().toTimeString());
-    core.setOutput("result", JSON.stringify(result));
+    core.setOutput("result", JSON.stringify(pdfText));
     
   } catch (error) {
     core.setFailed(error.message);
@@ -73,8 +79,20 @@ async function processPdf() {
   }
 }
 
+async function extractPDFContent(pdfPath) {
+  const pdfDoc = await PDFJS.getDocument(pdfPath);
+  const pageNumber = 1;
+  const page = await pdfDoc.getPage(pageNumber);
+  const textContent = await page.getTextContent();
+  return textContent;
+}
+
 async function initPuppeteer() {
   browser = await puppeteer.launch();
+}
+
+async function closePuppeteer() {
+  await browser.close();
 }
 
 async function scrapePDF(pdfFilePath) {
@@ -82,26 +100,27 @@ async function scrapePDF(pdfFilePath) {
   const fileUrl = `file://${path.resolve(pdfFilePath)}`;
   console.log(`fileUrl: ${fileUrl}`)
 
-  await page.goto(fileUrl, { waitUntil: 'networkidle0' });
+  await page.goto(fileUrl, {waitUntil: 'load', timeout: 0} );
 
-  const data = await page.evaluate(() => {
-    // Modify this section according to the structure of the PDF you're scraping
-    // Example: Extracting text from all paragraphs
-    const paragraphs = Array.from(document.querySelectorAll('p'));
-    const extractedData = {};
-    paragraphs.forEach((p, index) => {
-      extractedData[`paragraph_${index + 1}`] = p.textContent.trim();
-    });
-    return extractedData;
+  let pdfText = await pdfToText(pdfFilePath);
+
+  // return json data of the page using puppeteer evaluate
+  return { text: pdfText };
+}
+
+async function pdfToText(pdfPath) {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto(`file://${pdfPath}`);
+  const pdfText = await page.evaluate(() => {
+    const textContent = document.querySelector('body').textContent;
+    return textContent;
   });
 
-  await page.close();
-  return data;
+  await browser.close();
+  return pdfText;
 }
 
-async function closePuppeteer() {
-  await browser.close();
-}
 
 async function run() {
   await Promise.all([

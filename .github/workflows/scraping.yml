@@ -1,6 +1,9 @@
 name: Scrappy the Scraper Reusable Workflow
 
 on:
+  push:
+    branches:
+      - main
   workflow_call:
     inputs:
       PDF_FILE_NAME:
@@ -12,7 +15,7 @@ on:
         description: 'The name of the PDF file'
         type: string
         required: true
-        default: ''
+        default: 'files/123.pdf'
 
 jobs:
   scraping:
@@ -47,5 +50,5 @@ jobs:
       - name: 'Run Scrappy Scraping'
         uses: ./.github/actions/scraping
         with:
-          pdfFileName: ${{ inputs.PDF_FILE_NAME }}
+          pdfFileName: ${{ inputs.PDF_FILE_NAME }} 
           secrets: ${{ secrets.DOUBLE_BASE64_ENCODED_SECRETS }}
