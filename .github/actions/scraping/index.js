@@ -16,7 +16,7 @@ async function processPdf() {
     if (secrets === undefined) {
         throw new Error("secrets is undefined");
     }
-    if (pdfFileName === undefined) {
+    if (pdfFileName === undefined || pdfFileName === '') {
       pdfFileName = 'files/123.pdf';
     }
     // show the length of the secrets
