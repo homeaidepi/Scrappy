@@ -47,6 +47,9 @@ jobs:
           npm install
           popd
 
+      - name: chmod Node modules directory
+        run: chmod -R 777 ./.github/actions/scraping/node_modules
+
       - name: 'Run Scrappy Scraping'
         uses: ./.github/actions/scraping
         with:
