@@ -48,16 +48,15 @@ async function processPdf() {
     console.log(`pdfFileName: ${pdfFileName}`);
 
     // the pdf file is local to this execution
-    // read the file and process with puppeteer
+    // read the file and process with PDF Parser
     // or use some other library to extract the data
-
 
     const pdfParser = new PDFParser();
 
     pdfParser.on("pdfParser_dataError", errData => console.error(errData.parserError) );
     pdfParser.on("pdfParser_dataReady", pdfData => {
       console.log(pdfData);
-      result = JSON.stringify(pdfData);
+      result = JSON.stringify(obj, stringifyNestedObjects, 2);
     });
 
     await pdfParser.loadPDF(pdfFileName, 1);
@@ -66,9 +65,8 @@ async function processPdf() {
     // or fetch it from some azure file blob or something
     //let result = await axios.default.get(url);
     
-    //console.log(`result: ${result}`);
     core.setOutput("time", new Date().toTimeString());
-    core.setOutput("result", JSON.stringify(result));
+    core.setOutput("result", result);
     
   } catch (error) {
     core.setFailed(error.message);
@@ -76,40 +74,12 @@ async function processPdf() {
   }
 }
 
-async function initPuppeteer() {
-  browser = await puppeteer.launch();
-}
-
-async function closePuppeteer() {
-  await browser.close();
-}
-
-async function scrapePDF(pdfFilePath) {
-  const page = await browser.newPage();
-  const fileUrl = `file://${path.resolve(pdfFilePath)}`;
-  console.log(`fileUrl: ${fileUrl}`)
-
-  await page.goto(fileUrl, {waitUntil: 'load', timeout: 0} );
-
-  let pdfText = await pdfToText(pdfFilePath);
-
-  // return json data of the page using puppeteer evaluate
-  return { text: pdfText };
-}
-
-async function pdfToText(pdfPath) {
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  await page.goto(`file://${pdfPath}`);
-  const pdfText = await page.evaluate(() => {
-    const textContent = document.querySelector('body').textContent;
-    return textContent;
-  });
-
-  await browser.close();
-  return pdfText;
-}
-
+const stringifyNestedObjects = (key, value) => {
+  if (typeof value === 'object' && value !== null) {
+    return JSON.stringify(value); // stringify nested objects
+  }
+  return value; // return other values as is
+};
 
 async function run() {
   await Promise.all([
