@@ -48,13 +48,17 @@ async function processPdf() {
         }
     });
     
-    console.log(`pdfFileName: ${pdfFileName}`);
+    console.log(`pdfFileName before: ${pdfFileName}`);
+    pdfFileName = path.resolve('../../../', pdfFileName);
+    console.log(`pdfFileName after: ${pdfFileName}`);
 
     // the pdf file is local to this execution
     // read the file and process with PDF Parser
     // or use some other library to extract the data
 
-    const pdfParser = new PDFParser();
+    console.log('Reading PDF File');
+    const pdfParser = new PDFParser(this, 1);
+    console.log('PDF Parser Created');
 
     pdfParser.on("pdfParser_dataError", errData => console.error(errData.parserError) );
     pdfParser.on("pdfParser_dataReady", pdfData => {
@@ -64,7 +68,10 @@ async function processPdf() {
       console.log('Result', result);
     });
 
-    await pdfParser.loadPDF(pdfFileName, 1);
+    await pdfParser.loadPDF(pdfFileName, 1).then(() => {
+      console.log('PDF Loaded');
+    });
+
 
     // using the octokit to get the pdf file 
     // or fetch it from some azure file blob or something
