@@ -1,12 +1,10 @@
 const core = require('@actions/core');
-const axios = require('axios');
-const { Octokit } = require("@octokit/rest");
-const fetch = require("cross-fetch");
-//const puppeteer = require('puppeteer');
-const {readPdfText} = require('pdf-text-reader');
+// const axios = require('axios');
+// const { Octokit } = require("@octokit/rest");
+// const fetch = require("cross-fetch");
+const fs = require('fs');
 const path = require('path');
-
-let browser = null;
+const PDFParser = require('pdf2json');
 
 async function processPdf() {
   let result = null;
@@ -53,17 +51,16 @@ async function processPdf() {
     // read the file and process with puppeteer
     // or use some other library to extract the data
 
-    // make pdfFileName like "file://${pdfFileName}"
-    pdfFileName = `file://${path.resolve(pdfFileName)}`
-    const pdfText = await readPdfText({url: pdfFileName});
-    console.info(pdfText);
 
-    // // initialize puppeteer
-    // await initPuppeteer();
-    // let pdfFileData = await scrapePDF(pdfFileName);
-    // console.log(`pdfFileData: ${JSON.stringify(pdfFileData)}`);
-    // // close puppeteer
-    // await closePuppeteer();
+    const pdfParser = new PDFParser();
+
+    pdfParser.on("pdfParser_dataError", errData => console.error(errData.parserError) );
+    pdfParser.on("pdfParser_dataReady", pdfData => {
+      console.log(pdfData);
+      result = JSON.stringify(pdfData);
+    });
+
+    await pdfParser.loadPDF(pdfFileName, 1);
 
     // using the octokit to get the pdf file 
     // or fetch it from some azure file blob or something
@@ -71,20 +68,12 @@ async function processPdf() {
     
     //console.log(`result: ${result}`);
     core.setOutput("time", new Date().toTimeString());
-    core.setOutput("result", JSON.stringify(pdfText));
+    core.setOutput("result", JSON.stringify(result));
     
   } catch (error) {
     core.setFailed(error.message);
     console.log(error);
   }
-}
-
-async function extractPDFContent(pdfPath) {
-  const pdfDoc = await PDFJS.getDocument(pdfPath);
-  const pageNumber = 1;
-  const page = await pdfDoc.getPage(pageNumber);
-  const textContent = await page.getTextContent();
-  return textContent;
 }
 
 async function initPuppeteer() {
