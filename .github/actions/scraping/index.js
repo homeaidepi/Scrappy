@@ -58,8 +58,10 @@ async function processPdf() {
 
     pdfParser.on("pdfParser_dataError", errData => console.error(errData.parserError) );
     pdfParser.on("pdfParser_dataReady", pdfData => {
+      console.log("Data Ready");
       console.log(pdfData);
       result = pdfParser.getRawTextContent();
+      console.log('Result', result);
     });
 
     await pdfParser.loadPDF(pdfFileName, 1);
