@@ -49,7 +49,7 @@ async function processPdf() {
     });
     
     console.log(`pdfFileName before: ${pdfFileName}`);
-    pdfFileName = path.resolve('../../../', pdfFileName);
+    pdfFileName = path.resolve(pdfFileName);
     console.log(`pdfFileName after: ${pdfFileName}`);
 
     // the pdf file is local to this execution
