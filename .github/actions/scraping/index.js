@@ -59,7 +59,7 @@ async function processPdf() {
     pdfParser.on("pdfParser_dataError", errData => console.error(errData.parserError) );
     pdfParser.on("pdfParser_dataReady", pdfData => {
       console.log(pdfData);
-      result = JSON.stringify(pdfData, stringifyNestedObjects, 2);
+      result = pdfParser.getRawTextContent();
     });
 
     await pdfParser.loadPDF(pdfFileName, 1);
