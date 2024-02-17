@@ -3,6 +3,7 @@ const axios = require('axios');
 const { Octokit } = require("@octokit/rest");
 const fetch = require("cross-fetch");
 const puppeteer = require('puppeteer');
+const path = require('path');
 
 let browser = null;
 
@@ -79,6 +80,7 @@ async function initPuppeteer() {
 async function scrapePDF(pdfFilePath) {
   const page = await browser.newPage();
   const fileUrl = `file://${path.resolve(pdfFilePath)}`;
+  console.log(`fileUrl: ${fileUrl}`)
 
   await page.goto(fileUrl, { waitUntil: 'networkidle0' });
 
