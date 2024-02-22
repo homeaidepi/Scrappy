@@ -198,6 +198,21 @@ const processProfile1 = (page, orderedText, pageIndex) => {
   // let H2O = '';
   // let H2S = '';
   // let H2Sppm = '';
+  let rowDay = '';
+  let rowDifferential = '';
+  let rowPressure = '';
+  let rowTemperature = '';
+  let rowFlowTime = '';  
+  let rowRelativeDensity = ''; 
+  let rowPlate ='';
+  let rowVolume = '';
+  let rowHeatingValue = '';
+  let rowEnergy = '';
+
+  let rows = [];
+  let total = {};
+  let summary = '';
+
   let elementsToSkip = [11, 12, 13, 14, 15, 16, 17, 18, 19, 25, 26, 27, 28, 29, 30, 31, 62, 63, 64, 65, 66, 67, 68, 71, 72, 73, 74];
 
   page.forEach((element, elementIndex) => {
@@ -211,40 +226,50 @@ const processProfile1 = (page, orderedText, pageIndex) => {
       return;
     }
 
-    // Meter Status element 9 is the key and value is element 8
-    meterStatus = getValue(orderedText, pageIndex, 9, 10);
+    // Meter Status element element 8 is the value and 9 is the key
+    meterStatus = getValue(orderedText, pageIndex, 8);
     // # Pressure Base element 10 is the value  and element 11 is the key
-    pressureBase = getValue(orderedText, pageIndex, 11, 10);
+    pressureBase = getValue(orderedText, pageIndex, 10);
     // # Contact Hr. element 20 is the value element 21 is the key
-    contactHr = getValue(orderedText, pageIndex, 21, 20);
+    contactHr = getValue(orderedText, pageIndex, 20);
     // Temperature Base Element 23 is is the key Element 24 is the value
-    temperatureBase = getValue(orderedText, pageIndex, 23, 24);
+    temperatureBase = getValue(orderedText, pageIndex, 24);
     // # Atmospheric Pressure element 34 is the key and element 37 is the value
-    atmosPressure = getValue(orderedText, pageIndex, 34, 37);
+    atmosPressure = getValue(orderedText, pageIndex, 37);
     // # Calc Method element 47 is the key and element 48 is the value
-    calcMethod = getValue(orderedText, pageIndex, 47, 48);
+    calcMethod = getValue(orderedText, pageIndex, 48);
     // # Z Method element 50 is the key and element 52 is the value
-    zMethod = getValue(orderedText, pageIndex, 50, 52);
+    zMethod = getValue(orderedText, pageIndex, 52);
     // # Tube ID element 60 is the key and element 59 is the value
-    tubeID = getValue(orderedText, pageIndex, 60, 59);
+    tubeID = getValue(orderedText, pageIndex, 59);
     // # Tap Location element 72 is the key and element 73 is the value
-    tapLocation = getValue(orderedText, pageIndex, 72, 73);
+    tapLocation = getValue(orderedText, pageIndex, 73);
     // # Tap Type element 79 is the key and element 78 is the value
-    tapType = getValue(orderedText, pageIndex, 79, 78);
+    tapType = getValue(orderedText, pageIndex, 78);
     // # Full Well Stream element 35 is the key and element 33 is the value
-    fullWellStream = getValue(orderedText, pageIndex, 35, 33);
+    fullWellStream = getValue(orderedText, pageIndex, 33);
     // # WV Technique element 39 is the key and element 38 is the value
-    wvTechnique = getValue(orderedText, pageIndex, 39, 38);
+    wvTechnique = getValue(orderedText, pageIndex, 38);
     // # WV Method element 49 is the key and element 51 is the value
-    wvMethod = getValue(orderedText, pageIndex, 49, 51);
+    wvMethod = getValue(orderedText, pageIndex, 51);
     // # HV Condition element 61 is the key and element 58 is the value
-    hvCondition = getValue(orderedText, pageIndex, 61, 58);
+    hvCondition = getValue(orderedText, pageIndex, 58);
     // # Meter Type element 71 is the key and element 70 is the value
-    meterType = getValue(orderedText, pageIndex, 71, 70);
+    meterType = getValue(orderedText, pageIndex, 70);
     // # Interval element 76 is the key and element 77 is the value
-    interval = getValue(orderedText, pageIndex, 76, 77);
+    interval = getValue(orderedText, pageIndex, 77);
 
-    
+    // now go get rows
+    rows = getRows(orderedText, pageIndex);
+
+    // now get the total
+    total = getTotal(orderedText, pageIndex);
+
+    // now get the summary
+    summary = getSummary(orderedText, pageIndex);
+
+    // we need to get row data now and then we can process the elements
+    // row 1 starts at element 110 and ends at element 121
     //console.log(`Element ${elementIndex + 1}: ${element.text}`);
 
   });
@@ -266,10 +291,87 @@ const processProfile1 = (page, orderedText, pageIndex) => {
     wvMethod,
     hvCondition,
     meterType,
-    interval
+    interval,
+    rows,
+    total,
+    summary
   };
 
-  console.log(JSON.stringify(pageOutput));
+  console.log(JSON.stringify(pageOutput, null, 2));
+}
+
+const getSummary = (orderedText, pageIndex) => {
+  let summary = getValue(orderedText, pageIndex, 409);
+  return summary;
+}
+
+const getTotal = (orderedText, pageIndex) => {
+  let total = {};
+  let totalDifferential = getValue(orderedText, pageIndex, 406);
+  let totalPressure = getValue(orderedText, pageIndex, 405);
+  let totalTemperature = getValue(orderedText, pageIndex, 404);
+  let totalFlowTime = getValue(orderedText, pageIndex, 402);
+  let totalRelativeDensity = getValue(orderedText, pageIndex, 401);
+  let totalVolume = getValue(orderedText, pageIndex, 407);
+  let totalEnergy = getValue(orderedText, pageIndex, 403);
+
+  total = {
+    totalDifferential,
+    totalPressure,
+    totalTemperature,
+    totalFlowTime,
+    totalRelativeDensity,
+    totalVolume,
+    totalEnergy
+  };
+
+  return total;
+
+}
+
+const getRows = (orderedText, pageIndex) => {
+  let rows = [];
+  let numOfRows = 30;
+  for (let i = 0; i < numOfRows; i++) {
+    rows.push(getRow(orderedText, pageIndex, i));
+  }
+  return rows;
+}
+
+const getRow = (orderedText, pageIndex, index) => {
+  // rowDay = element 110 value
+  rowDay = getValue(orderedText, pageIndex, 110 + ((index * 10)));
+  // rowDifferential = element 109 value
+  rowDifferential = getValue(orderedText, pageIndex, 109 + ((index * 10)));
+  // rowPressure = element 108 value
+  rowPressure = getValue(orderedText, pageIndex, 108 + ((index * 10)));
+  // rowTemperature = element 107 value
+  rowTemperature = getValue(orderedText, pageIndex, 107 + ((index * 10)));
+  // rowFlowTime = element 106 value
+  rowFlowTime = getValue(orderedText, pageIndex, 106 + ((index * 10)));
+  // rowRelativeDensity = element 105 value
+  rowRelativeDensity = getValue(orderedText, pageIndex, 105 + ((index * 10)));
+  // rowPlate = element 104 value
+  rowPlate = getValue(orderedText, pageIndex, 104 + ((index * 10)));
+  // rowVolume = element 103 value
+  rowVolume = getValue(orderedText, pageIndex, 103 + ((index * 10)));
+  // rowHeatingValue = element 102 value
+  rowHeatingValue = getValue(orderedText, pageIndex, 102 + ((index * 10)));
+  // rowEnergy = element 101 value
+  rowEnergy = getValue(orderedText, pageIndex, 101 + ((index * 10)));
+
+  return {
+    rowDay,
+    rowDifferential,
+    rowPressure,
+    rowTemperature,
+    rowFlowTime,
+    rowRelativeDensity,
+    rowPlate,
+    rowVolume,
+    rowHeatingValue,
+    rowEnergy
+  };
 }
 
 const outputKeyAndValueFromPage = (orderedText, pageIndex, keyIndex, valueIndex) => {
@@ -283,8 +385,12 @@ const getKeyValuePairs = (orderedText, pageIndex, keyIndex, valueIndex) => {
   return { key, value };
 };
 
-const getValue = (orderedText, pageIndex, keyIndex, valueIndex) => {
-  return getKeyValuePairs(orderedText, pageIndex, keyIndex, valueIndex).value;
+const getValue = (orderedText, pageIndex, valueIndex) => {
+  let value = orderedText[pageIndex][valueIndex -1].text;
+
+  // remove any preceding or trailing white space
+  value = value.trim();
+  return value;
 };
 
 // const stringifyNestedObjects = (key, value) => {
