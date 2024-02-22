@@ -64,6 +64,10 @@ async function processPdf() {
     pdfParser.on("pdfParser_dataReady", pdfData => {
       console.log("Data Ready");
       console.log(pdfData);
+      const parsedPages = parsePages(pdfData);
+      const orderedText = orderText(parsedPages);
+      printText(orderedText, 50, 2);
+      
       result = pdfParser.getRawTextContent();
       console.log('Result', result);
     });
@@ -71,11 +75,6 @@ async function processPdf() {
     await pdfParser.loadPDF(pdfFileName, 1).then(() => {
       console.log('PDF Loaded');
     });
-
-
-    // using the octokit to get the pdf file 
-    // or fetch it from some azure file blob or something
-    //let result = await axios.default.get(url);
     
     core.setOutput("time", new Date().toTimeString());
     core.setOutput("result", result);
@@ -86,12 +85,92 @@ async function processPdf() {
   }
 }
 
-const stringifyNestedObjects = (key, value) => {
-  if (typeof value === 'object' && value !== null) {
-    return JSON.stringify(value); // stringify nested objects
-  }
-  return value; // return other values as is
+const parsePages = (pdfData) => {
+  const pages = pdfData.Pages;
+  const parsedPages = pages.map(page => {
+    const parsedText = parseText(page.Texts);
+    return parsedText;
+  });
+  return parsedPages;
 };
+
+const parseText = (texts) => {
+  const parsedText = texts.map(text => {
+    const parsed = {
+      x: text.x,
+      y: text.y,
+      text: decodeURIComponent(text.R[0].T)
+    };
+    return parsed;
+  });
+  return parsedText;
+}
+
+const orderText = (parsedPages) => {
+  const orderedText = parsedPages.map(page => {
+    const ordered = page.sort((a, b) => a.y - b.y);
+    return ordered;
+  });
+  return orderedText;
+};
+
+const printText = (orderedText, numberOfElementsToOutput, numberOfPagesToOutput) => {
+  orderedText.forEach((page, pageIndex) => {
+    if (pageIndex + 1 > numberOfPagesToOutput) {
+      return;
+    }
+    console.log(`Page ${pageIndex + 1}`);
+    // we can output the first 10 elements of each page
+    page.slice(0, numberOfElementsToOutput).forEach((element, elementIndex) => {
+      // exclude elements with no text
+      if (element.text === '' || element.text === ' ' || element.text === '\n') {
+        return;
+      }
+      // exclude elements 12-19
+      if (elementIndex >= 11 && elementIndex <= 18) {
+        return;
+      }
+      // # Pressure Base
+      // element 10 is the value 
+      // element 11 is the key
+      if (elementIndex === 9 || elementIndex === 10) {
+        outputKeyAndValueFromPage(orderedText, pageIndex, 11, 10);
+        return;
+      } 
+      // # Contact Hr.
+      // element 20 is the value
+      // element 21 is the key
+      if (elementIndex === 19 || elementIndex === 20) {
+        outputKeyAndValueFromPage(orderedText, pageIndex, 21, 20);
+        return;
+      }
+
+      console.log(`Element ${elementIndex + 1}: ${element.text}`);
+    });
+  });
+};
+
+const outputKeyAndValueFromPage = (orderedText, pageIndex, keyIndex, valueIndex) => {
+  let { key, value } = getKeyValuePairs(orderedText, pageIndex, keyIndex, valueIndex);
+  if (key !== '' && value !== '') console.log(`${key} ${value}`);
+}
+
+const getKeyValuePairs = (orderedText, pageIndex, keyIndex, valueIndex) => {
+  const key = orderedText[pageIndex][keyIndex-1].text;
+  const value = orderedText[pageIndex][valueIndex-1].text;
+  return { key, value };
+};
+
+const getTextAtPosition = (orderedText, pageIndex, elementIndex) => {
+  return orderedText[pageIndex][elementIndex].text;
+};
+
+// const stringifyNestedObjects = (key, value) => {
+//   if (typeof value === 'object' && value !== null) {
+//     return JSON.stringify(value); // stringify nested objects
+//   }
+//   return value; // return other values as is
+// };
 
 async function run() {
   await Promise.all([
