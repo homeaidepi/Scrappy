@@ -13,6 +13,7 @@ async function processPdf() {
   try {
     // get all the inputs
     let pdfFileName = core.getInput('pdfFileName');
+    let numOfPagesToParse = 7;
     const secrets = core.getInput("secrets");
 
     // throw an error if the secrets are not set
@@ -66,7 +67,7 @@ async function processPdf() {
       const parsedPages = parsePages(pdfData);
       const orderedText = orderText(parsedPages);
       printMeta(pdfData);
-      printText(orderedText, 2);
+      printText(orderedText, numOfPagesToParse);
     });
 
     await pdfParser.loadPDF(pdfFileName, 1).then(() => {
@@ -198,22 +199,30 @@ const processProfile1 = (page, orderedText, pageIndex) => {
   // let H2O = '';
   // let H2S = '';
   // let H2Sppm = '';
-  let rowDay = '';
-  let rowDifferential = '';
-  let rowPressure = '';
-  let rowTemperature = '';
-  let rowFlowTime = '';  
-  let rowRelativeDensity = ''; 
-  let rowPlate ='';
-  let rowVolume = '';
-  let rowHeatingValue = '';
-  let rowEnergy = '';
 
   let rows = [];
   let total = {};
   let summary = '';
 
   let elementsToSkip = [11, 12, 13, 14, 15, 16, 17, 18, 19, 25, 26, 27, 28, 29, 30, 31, 62, 63, 64, 65, 66, 67, 68, 71, 72, 73, 74];
+  let totalElements = page.length;
+  let pageIndexOffset = 0;
+  
+  // here we going to set a page size offset based on the number of elements on the page
+  switch (totalElements) {
+    case 412:
+      pageIndexOffset = -1;
+      break;
+    case 413:
+      pageIndexOffset = 0;
+      break;
+    case 414:
+      pageIndexOffset = 1;
+      break;
+    default:
+      pageIndexOffset = 0;
+      break;
+  }
 
   page.forEach((element, elementIndex) => {
     // exclude elements with no text
@@ -260,13 +269,13 @@ const processProfile1 = (page, orderedText, pageIndex) => {
     interval = getValue(orderedText, pageIndex, 77);
 
     // now go get rows
-    rows = getRows(orderedText, pageIndex);
+    rows = getRows(orderedText, pageIndex, pageIndexOffset);
 
     // now get the total
-    total = getTotal(orderedText, pageIndex);
+    total = getTotal(orderedText, pageIndex, pageIndexOffset);
 
     // now get the summary
-    summary = getSummary(orderedText, pageIndex);
+    summary = getSummary(orderedText, pageIndex, pageIndexOffset);
 
     // we need to get row data now and then we can process the elements
     // row 1 starts at element 110 and ends at element 121
@@ -329,36 +338,36 @@ const getTotal = (orderedText, pageIndex) => {
 
 }
 
-const getRows = (orderedText, pageIndex) => {
+const getRows = (orderedText, pageIndex, offset) => {
   let rows = [];
   let numOfRows = 30;
   for (let i = 0; i < numOfRows; i++) {
-    rows.push(getRow(orderedText, pageIndex, i));
+    rows.push(getRow(orderedText, pageIndex, i, offset));
   }
   return rows;
 }
 
-const getRow = (orderedText, pageIndex, index) => {
+const getRow = (orderedText, pageIndex, index, offset) => {
   // rowDay = element 110 value
-  rowDay = getValue(orderedText, pageIndex, 110 + ((index * 10)));
+  rowDay = getValue(orderedText, pageIndex, 110 + (index * 10) + offset);
   // rowDifferential = element 109 value
-  rowDifferential = getValue(orderedText, pageIndex, 109 + ((index * 10)));
+  rowDifferential = getValue(orderedText, pageIndex, 109 + (index * 10) + offset);
   // rowPressure = element 108 value
-  rowPressure = getValue(orderedText, pageIndex, 108 + ((index * 10)));
+  rowPressure = getValue(orderedText, pageIndex, 108 + (index * 10) + offset);
   // rowTemperature = element 107 value
-  rowTemperature = getValue(orderedText, pageIndex, 107 + ((index * 10)));
+  rowTemperature = getValue(orderedText, pageIndex, 107 ,(index * 10) + offset);
   // rowFlowTime = element 106 value
-  rowFlowTime = getValue(orderedText, pageIndex, 106 + ((index * 10)));
+  rowFlowTime = getValue(orderedText, pageIndex, 106 + (index * 10) + offset);
   // rowRelativeDensity = element 105 value
-  rowRelativeDensity = getValue(orderedText, pageIndex, 105 + ((index * 10)));
+  rowRelativeDensity = getValue(orderedText, pageIndex, 105 + (index * 10) + offset);
   // rowPlate = element 104 value
-  rowPlate = getValue(orderedText, pageIndex, 104 + ((index * 10)));
+  rowPlate = getValue(orderedText, pageIndex, 104 + (index * 10) + offset);
   // rowVolume = element 103 value
-  rowVolume = getValue(orderedText, pageIndex, 103 + ((index * 10)));
+  rowVolume = getValue(orderedText, pageIndex, 103 + (index * 10) + offset);
   // rowHeatingValue = element 102 value
-  rowHeatingValue = getValue(orderedText, pageIndex, 102 + ((index * 10)));
+  rowHeatingValue = getValue(orderedText, pageIndex, 102 + (index * 10) + offset);
   // rowEnergy = element 101 value
-  rowEnergy = getValue(orderedText, pageIndex, 101 + ((index * 10)));
+  rowEnergy = getValue(orderedText, pageIndex, 101 ,(index * 10) + offset);
 
   return {
     rowDay,
@@ -374,19 +383,19 @@ const getRow = (orderedText, pageIndex, index) => {
   };
 }
 
-const outputKeyAndValueFromPage = (orderedText, pageIndex, keyIndex, valueIndex) => {
-  let { key, value } = getKeyValuePairs(orderedText, pageIndex, keyIndex, valueIndex);
-  if (key !== '' && value !== '') { console.log(`${key} ${value}`); }
-}
+// const outputKeyAndValueFromPage = (orderedText, pageIndex, keyIndex, valueIndex) => {
+//   let { key, value } = getKeyValuePairs(orderedText, pageIndex, keyIndex, valueIndex);
+//   if (key !== '' && value !== '') { console.log(`${key} ${value}`); }
+// }
 
-const getKeyValuePairs = (orderedText, pageIndex, keyIndex, valueIndex) => {
-  const key = orderedText[pageIndex][keyIndex - 1].text;
-  const value = orderedText[pageIndex][valueIndex - 1].text;
-  return { key, value };
-};
+// const getKeyValuePairs = (orderedText, pageIndex, keyIndex, valueIndex) => {
+//   const key = orderedText[pageIndex][keyIndex - 1].text;
+//   const value = orderedText[pageIndex][valueIndex - 1].text;
+//   return { key, value };
+// };
 
 const getValue = (orderedText, pageIndex, valueIndex) => {
-  let value = orderedText[pageIndex][valueIndex -1].text;
+  let value = orderedText[pageIndex][valueIndex - 1].text;
 
   // remove any preceding or trailing white space
   value = value.trim();
