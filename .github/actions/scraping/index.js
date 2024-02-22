@@ -13,16 +13,19 @@ async function processPdf() {
     let pdfFileName = core.getInput('pdfFileName');
     const secrets = core.getInput("secrets");
 
+    // throw an error if the secrets are not set
     if (secrets === undefined) {
         throw new Error("secrets is undefined");
     }
+
+    // set the pdfFileName to a default if it is not set
     if (pdfFileName === undefined || pdfFileName === '') {
       pdfFileName = 'files/123.pdf';
     }
     // show the length of the secrets
-    console.log('Has secrets: ' + secrets.length + ' characters');
+    //console.log('Has secrets: ' + secrets.length + ' characters');
 
-    console.log('Decoding secrets...');
+    //console.log('Decoding secrets...');
     // the secrets are double base64 encoded, so we need to decode them twice
     const decodedSecrets = Buffer.from(secrets, 'base64').toString('ascii');
     // its double encoded, so we need to decode it again
@@ -38,7 +41,7 @@ async function processPdf() {
         return acc;
     }, {});
 
-    console.log('Parsed this many secrets: ' + Object.keys(parsedSecrets).length + ' secrets');
+    // console.log('Parsed this many secrets: ' + Object.keys(parsedSecrets).length + ' secrets');
 
     console.log('Setting secrets as environment variables...');
     // set the secrets as environment variables
@@ -48,33 +51,24 @@ async function processPdf() {
         }
     });
     
-    console.log(`pdfFileName before: ${pdfFileName}`);
+    // get the file name resolve to a local path atm
     pdfFileName = path.resolve(pdfFileName);
-    console.log(`pdfFileName after: ${pdfFileName}`);
 
-    // the pdf file is local to this execution
-    // read the file and process with PDF Parser
-    // or use some other library to extract the data
-
-    console.log('Reading PDF File');
+    console.log(`Scrappy PDF FileName: ${pdfFileName}`);
     const pdfParser = new PDFParser(this, 1);
     console.log('PDF Parser Created');
 
     pdfParser.on("pdfParser_dataError", errData => console.error(errData.parserError) );
     pdfParser.on("pdfParser_dataReady", pdfData => {
-      console.log("Data Ready");
-      console.log(pdfData);
+      console.log("Scrappy Processing PDF");
       const parsedPages = parsePages(pdfData);
       const orderedText = orderText(parsedPages);
       printMeta(pdfData);
       printText(orderedText, 50, 2);
-      
-      //result = pdfParser.getRawTextContent();
-      //console.log('Result', result);
     });
 
     await pdfParser.loadPDF(pdfFileName, 1).then(() => {
-      console.log('PDF Loaded');
+      console.log('Scrappy Loaded PDF');
     });
     
     core.setOutput("time", new Date().toTimeString());
