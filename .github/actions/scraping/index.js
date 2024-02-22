@@ -4,6 +4,7 @@ const { profile } = require('console');
 // const { Octokit } = require("@octokit/rest");
 // const fetch = require("cross-fetch");
 const fs = require('fs');
+const { get } = require('http');
 const path = require('path');
 const PDFParser = require('pdf2json');
 
@@ -89,16 +90,16 @@ const printMeta = (pdfData) => {
     if (key === 'CreationDate' || key === 'ModDate') {
       // date format is written like "D:20210914154800-07'00'"
       // we need to remove the D: and the timezone
-      let date = cleanDateValue(meta[key]);
+      let date = meta[key].replace("D:", "").replace(/-07'00'/, "");
+      // format the date to be more readable
+      date = `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)} ${date.slice(8, 10)}:${date.slice(10, 12)}:${date.slice(12, 14)}`;
       console.log(`${key}: ${date}`);
       return;
     }
-    console.log(`${key}: ${meta[key]}`);
+    if (key !== "Metadata") {
+      console.log(`${key}: ${meta[key]}`);
+    }
   });
-};
-
-const cleanDateValue = (date) => {
-  return date.replace('D:', '').replace(/-07'00'/, '');
 };
 
 const parsePages = (pdfData) => {
@@ -135,9 +136,6 @@ const printText = (orderedText, numberOfPagesToOutput) => {
     if (pageIndex + 1 > numberOfPagesToOutput) {
       return;
     }
-    console.log(`Page ${pageIndex + 1}`);
-
-
     let profile = null // default profile
     // TODO determine the profile to load
 
@@ -200,6 +198,7 @@ const processProfile1 = (page, orderedText, pageIndex) => {
   // let H2O = '';
   // let H2S = '';
   // let H2Sppm = '';
+  let elementsToSkip = [11, 12, 13, 14, 15, 16, 17, 18, 19, 25, 26, 27, 28, 29, 30, 31, 62, 63, 64, 65, 66, 67, 68, 71, 72, 73, 74];
 
   page.forEach((element, elementIndex) => {
     // exclude elements with no text
@@ -207,42 +206,70 @@ const processProfile1 = (page, orderedText, pageIndex) => {
       return;
     }
 
-    // skip elements 11-19, 26-32, 62-68, 71-74
-    if ((elementIndex > 10 && elementIndex < 20) || (elementIndex > 24 && elementIndex < 33) || (elementIndex > 61 && elementIndex < 69)) {
+    // skip elements 
+    if (elementsToSkip.includes(elementIndex + 1)) {
       return;
     }
 
     // Meter Status element 9 is the key and value is element 8
-    if (elementIndex === 8 || elementIndex === 9) {
-      meterStatus = outputKeyAndValueFromPage(orderedText, pageIndex, 9, 8);
-      return;
-    }
+    meterStatus = getValue(orderedText, pageIndex, 9, 10);
     // # Pressure Base element 10 is the value  and element 11 is the key
-    if (elementIndex === 9 || elementIndex === 10) {
-      pressureBase = outputKeyAndValueFromPage(orderedText, pageIndex, 11, 10);
-      return;
-    }
+    pressureBase = getValue(orderedText, pageIndex, 11, 10);
     // # Contact Hr. element 20 is the value element 21 is the key
-    if (elementIndex === 19 || elementIndex === 20) {
-      contactHr = outputKeyAndValueFromPage(orderedText, pageIndex, 21, 20);
-      return;
-    }
+    contactHr = getValue(orderedText, pageIndex, 21, 20);
     // Temperature Base Element 23 is is the key Element 24 is the value
-    if (elementIndex === 22 || elementIndex === 23) {
-      temperatureBase = outputKeyAndValueFromPage(orderedText, pageIndex, 23, 24);
-      return;
-    }
+    temperatureBase = getValue(orderedText, pageIndex, 23, 24);
+    // # Atmospheric Pressure element 34 is the key and element 37 is the value
+    atmosPressure = getValue(orderedText, pageIndex, 34, 37);
+    // # Calc Method element 47 is the key and element 48 is the value
+    calcMethod = getValue(orderedText, pageIndex, 47, 48);
+    // # Z Method element 50 is the key and element 52 is the value
+    zMethod = getValue(orderedText, pageIndex, 50, 52);
+    // # Tube ID element 60 is the key and element 59 is the value
+    tubeID = getValue(orderedText, pageIndex, 60, 59);
+    // # Tap Location element 72 is the key and element 73 is the value
+    tapLocation = getValue(orderedText, pageIndex, 72, 73);
+    // # Tap Type element 79 is the key and element 78 is the value
+    tapType = getValue(orderedText, pageIndex, 79, 78);
+    // # Full Well Stream element 35 is the key and element 33 is the value
+    fullWellStream = getValue(orderedText, pageIndex, 35, 33);
+    // # WV Technique element 39 is the key and element 38 is the value
+    wvTechnique = getValue(orderedText, pageIndex, 39, 38);
+    // # WV Method element 49 is the key and element 51 is the value
+    wvMethod = getValue(orderedText, pageIndex, 49, 51);
+    // # HV Condition element 61 is the key and element 58 is the value
+    hvCondition = getValue(orderedText, pageIndex, 61, 58);
+    // # Meter Type element 71 is the key and element 70 is the value
+    meterType = getValue(orderedText, pageIndex, 71, 70);
+    // # Interval element 76 is the key and element 77 is the value
+    interval = getValue(orderedText, pageIndex, 76, 77);
 
-    // dont include "Element" wording if the index is less then 25
-    // if (elementIndex < 25) {
-    //   console.log(`${element.text}`);
-    //   return;
-    // }
-
-    console.log(`Element ${elementIndex + 1}: ${element.text}`);
+    
+    //console.log(`Element ${elementIndex + 1}: ${element.text}`);
 
   });
+  
+  let pageOutput = {
+    page : pageIndex + 1,
+    meterStatus,
+    pressureBase,
+    contactHr,
+    temperatureBase,
+    atmosPressure,
+    calcMethod,
+    zMethod,
+    tubeID,
+    tapLocation,
+    tapType,
+    fullWellStream,
+    wvTechnique,
+    wvMethod,
+    hvCondition,
+    meterType,
+    interval
+  };
 
+  console.log(JSON.stringify(pageOutput));
 }
 
 const outputKeyAndValueFromPage = (orderedText, pageIndex, keyIndex, valueIndex) => {
@@ -254,6 +281,10 @@ const getKeyValuePairs = (orderedText, pageIndex, keyIndex, valueIndex) => {
   const key = orderedText[pageIndex][keyIndex - 1].text;
   const value = orderedText[pageIndex][valueIndex - 1].text;
   return { key, value };
+};
+
+const getValue = (orderedText, pageIndex, keyIndex, valueIndex) => {
+  return getKeyValuePairs(orderedText, pageIndex, keyIndex, valueIndex).value;
 };
 
 // const stringifyNestedObjects = (key, value) => {
