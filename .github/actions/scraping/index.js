@@ -66,10 +66,11 @@ async function processPdf() {
       console.log(pdfData);
       const parsedPages = parsePages(pdfData);
       const orderedText = orderText(parsedPages);
+      printMeta(pdfData);
       printText(orderedText, 50, 2);
       
-      result = pdfParser.getRawTextContent();
-      console.log('Result', result);
+      //result = pdfParser.getRawTextContent();
+      //console.log('Result', result);
     });
 
     await pdfParser.loadPDF(pdfFileName, 1).then(() => {
@@ -84,6 +85,26 @@ async function processPdf() {
     console.log(error);
   }
 }
+
+const printMeta = (pdfData) => {
+  let meta = pdfData.Meta;
+  // for each field in the meta object print it out
+  Object.keys(meta).forEach(key => {
+    // format the creation date
+    if (key === 'CreationDate' || key === 'ModDate') {
+      // date format is written like "D:20210914154800-07'00'"
+      // we need to remove the D: and the timezone
+      let date = cleanDateValue(meta[key]);
+      console.log(`${key}: ${date}`);
+      return;
+    }
+    console.log(`${key}: ${meta[key]}`);
+  });
+};
+
+const cleanDateValue = (date) => {
+  return date.replace('D:', '').replace(/-07'00'/, '');
+};
 
 const parsePages = (pdfData) => {
   const pages = pdfData.Pages;
@@ -130,21 +151,34 @@ const printText = (orderedText, numberOfElementsToOutput, numberOfPagesToOutput)
       if (elementIndex >= 11 && elementIndex <= 18) {
         return;
       }
-      // # Pressure Base
-      // element 10 is the value 
-      // element 11 is the key
+
+      // Meter Status element 9 is the key and value is element 8
+      if (elementIndex === 8 || elementIndex === 9) {
+        outputKeyAndValueFromPage(orderedText, pageIndex, 9, 8);
+        return;
+      }
+      // # Pressure Base element 10 is the value  and element 11 is the key
       if (elementIndex === 9 || elementIndex === 10) {
         outputKeyAndValueFromPage(orderedText, pageIndex, 11, 10);
         return;
       } 
-      // # Contact Hr.
-      // element 20 is the value
-      // element 21 is the key
+      // # Contact Hr. element 20 is the value element 21 is the key
       if (elementIndex === 19 || elementIndex === 20) {
         outputKeyAndValueFromPage(orderedText, pageIndex, 21, 20);
         return;
       }
+      // Temperature Base Element 23 is is the key Element 24 is the value
+      if (elementIndex === 22 || elementIndex === 23) {
+        outputKeyAndValueFromPage(orderedText, pageIndex, 23, 24);
+        return;
+      }
 
+      // dont include "Element" wording if the index is less then 25
+      if (elementIndex < 25) {
+        console.log(`${element.text}`);
+        return;
+      } 
+      
       console.log(`Element ${elementIndex + 1}: ${element.text}`);
     });
   });
